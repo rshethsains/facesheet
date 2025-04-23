@@ -1,34 +1,27 @@
 import os
-import io
-import sys
 import shutil
 from datetime import timedelta
+import time
 from dotenv import load_dotenv
-from flask import Flask, render_template, session, request, redirect, url_for, jsonify, Response
-from flask_socketio import SocketIO, emit
-from flask_session import Session
-from flask_cors import CORS
 
-from auth import login, logout, check_login, setup_oauth, authorized, ALLOWED_EMAILS
-from facesheet import generate as generate_facesheet
-from utils import log_message
+from flask import Flask, render_template, session, request, redirect, url_for, jsonify, send_file
+from flask_session import Session
+from threading import Thread
+
+from auth import login, check_login, setup_oauth, authorized
+from facesheet import generate
+from logger import log_message, LOG_FILE
+from config import IS_PRODUCTION, BASE_URL, PORT, PARENT_FOLDER
+from sheet import list_google_sheets
+from datetime_helper import format_datetime
+from core import app
 
 # === Load environment variables ===
-load_dotenv()
-ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
-BASE_URL = os.getenv("LOCAL_URL") if ENVIRONMENT == "development" else os.getenv("BASE_URL")
-PORT = int(os.getenv('PORT', 8080))
+if not IS_PRODUCTION:
+    load_dotenv()
 
-# === Flask App Setup ===
-app = Flask(__name__, template_folder='../templates')
 app.config['BASE_URL'] = BASE_URL
-app.secret_key = 'super_secure_secret_key'
-
-# CORS
-CORS(app, origins=[
-    "https://facesheet-frontend.storage.googleapis.com",
-    "http://localhost:5000"
-])
+app.secret_key = os.getenv("SECRET_KEY", "fallback-dev-key")
 
 # === Session Setup ===
 SESSION_FOLDER = os.path.join(os.getcwd(), 'flask_session')
@@ -44,16 +37,16 @@ app.config.update({
 })
 Session(app)
 
-# === OAuth & SocketIO ===
+# === OAuth Setup ===
 setup_oauth(app)
-socketio = SocketIO(app)
-
-# === Routes ===
 
 @app.route('/')
 def home():
     if 'email' in session:
-        return render_template('home.html', email=session.get('email'))
+        sheets = list_google_sheets()
+        for s in sheets:
+            s["modifiedTime"] = format_datetime(s["modifiedTime"])
+        return render_template('home.html', email=session.get('email'), sheets=sheets, parent=PARENT_FOLDER)
     return redirect(url_for('login_page'))
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -64,20 +57,8 @@ def login_page():
         if not email or "@" not in email:
             error = "Please enter a valid email address."
         else:
-            session['submitted_email'] = email.strip().lower()
-            return login()  # Should trigger Google OAuth flow
+            return login()
     return render_template('login.html', error=error)
-
-@app.route('/precheck_email', methods=['POST'])
-def precheck_email():
-    submitted_email = request.form.get('email', '').strip().lower()
-    print(f"Submitted Email: {submitted_email}")
-    if submitted_email in ALLOWED_EMAILS:
-        session['submitted_email'] = submitted_email
-        return login()
-    else:
-        error = f"🚫 Email {submitted_email} is not allowed."
-        return render_template('login.html', error=error)
 
 @app.route('/login/authorized')
 def authorized_route():
@@ -93,44 +74,46 @@ def me():
     return jsonify({"email": session.get("email")})
 
 @app.route('/generate', methods=['POST'])
-def rerun_generate():
-    if 'email' not in session:
-        return redirect(url_for('login_page'))
+def generate_route():
+    email = session.get("email")
+    if not email:
+        return jsonify({"error": "Not logged in"}), 403
+
+    data = request.json
+    sheet_id = data.get("sheet_id")
+    if not sheet_id:
+        return jsonify({"error": "Missing sheet_id"}), 400
+
+    if os.path.exists(LOG_FILE):
+        os.remove(LOG_FILE)
 
     try:
-        socketio.emit('log', {'message': 'Generation started...'})
-
-        result = generate_facesheet(email=session['email'], socketio=socketio)
-
-        if isinstance(result, Response):
-            result_data = result.get_json()
-        else:
-            result_data = result
-
-        pdf_link = result_data.get('pdf_link')
-        message = f"🎉 All done! PDF Link: {pdf_link}" if pdf_link else "❌ Failed to generate PDF link."
-        socketio.emit('log', {'message': message})
-
+        log_message("Generation started...")
+        start_time = time.time()
+        result = generate(email, sheet_id)
+        end_time = time.time()
+        duration = round(end_time - start_time, 2)
+        log_message(f"🎉 All done in {duration} seconds! PDF Link: {result.get('pdf_link')}")
         return jsonify({
-            'result': 'Generation Complete' if pdf_link else 'Error',
-            'pdf_link': pdf_link
+            "pdf_link": result.get("pdf_link"),
+            "duration": duration
         })
-
     except Exception as e:
-        error_message = f"❌ Error during generation: {e}"
-        socketio.emit('log', {'message': error_message})
-        return jsonify({'result': 'Error', 'pdf_link': None})
+        log_message(f"❌ Error during generation: {e}")
+        return jsonify({"error": str(e)}), 500
 
-# === Socket.IO Events ===
 
-@socketio.on('connect')
-def handle_connect():
-    print('Client connected')
+@app.route('/logs')
+def get_logs():
+    if os.path.exists(LOG_FILE):
+        return send_file(LOG_FILE, mimetype='text/plain')
+    return "No logs available.", 404
 
-@socketio.on('disconnect')
-def handle_disconnect():
-    print('Client disconnected')
+@app.route("/sheets")
+def get_sheets():
+    return jsonify(list_google_sheets())
 
 # === Main Entry Point ===
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=PORT, debug=True)
+if __name__ == '__main__' and not IS_PRODUCTION:
+    app.run(host='0.0.0.0', port=PORT, debug=True, threaded=True)
+

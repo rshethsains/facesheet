@@ -2,11 +2,13 @@
 *
 
 !app/*
+!app/simple_logger.py
 !Dockerfile
 !requirements.txt
 !templates/*
 !README.md
-!deploy/*
+!deploy/
+!deploy/deploy.py
 !.gitignore
 
 # Ignore
