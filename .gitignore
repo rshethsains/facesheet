@@ -1,0 +1,16 @@
+# Ignore everything by default
+*
+
+!app/*
+!Dockerfile
+!requirements.txt
+!templates/*
+!README.md
+!deploy/*
+!.gitignore
+
+# Ignore
+credentials.json
+.env
+deploy/env.yaml
+venv/

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Face Sheet</title>
+<style>
+  body {
+    font-family: "Century Gothic";
+    text-align: center;
+    margin: 40px;
+  }
+  .title {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  .section-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 950px;
+    margin: 0 auto;
+  }
+  .card {
+    width: 160px;
+    height: 250px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    overflow: hidden;
+    box-sizing: border-box;
+    margin-top: 10px;
+  }
+  .card img {
+    width: 135px;
+    height: 180px;
+    object-fit: fill;       /* stretch to fill, no crop */
+    border-radius: 4px;
+    padding: 0;             /* avoid space that causes overflow */
+    box-sizing: border-box;
+  }
+  .name {
+    font-weight:600;
+    text-decoration:none;
+    vertical-align:baseline;
+    font-size:12pt;
+    padding: 3px;
+    box-sizing: border-box;
+  }
+  .role {
+    font-size: 0.9em;
+    font-size:10pt;
+    text-align: center;
+    box-sizing: border-box;
+  }
+</style>
+</head>
+<body>
+  <div class="title">{{ settings_data.Title }}</div>
+  <div class="logo">
+    <img src="{{ logo_path }}" alt="Logo" style="width: 320px; height: 110px;">
+  </div>
+  {% for category, people in grouped_people.items() %}
+  {% if category != 'Headline' %}
+    <div class="section-title">{{ category }}</div>
+  {% endif %}
+    <div class="grid">
+      {% for person in people %}
+      <div class="card">
+        <img src="{{ person['Image File'] }}" alt="{{ person['Name'] }}">
+        <div class="name">{{ person['Name'] }}</div>
+        <div class="role">{{ person['Title'] }}</div>
+        <div class="role">{{ person['Show'] }}</div>
+        <!-- <div class="role">{{ person['Role'] }}</div> -->
+      </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</body>
+</html>
+
+

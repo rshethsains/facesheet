@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Facesheet Generator</title>
+  <script src="https://cdn.socket.io/4.4.1/socket.io.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-8">
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow">
+    <h1 class="text-2xl font-bold mb-4">Welcome, <span id="user-email" class="text-blue-600">[loading...]</span></h1>
+    
+    <button id="generate-btn"
+      class="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50">
+      <span id="generate-text">Generate</span>
+      <svg id="spinner" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+              d="M4 12a8 8 0 018-8v8z"></path>
+      </svg>
+    </button>
+
+    <div id="logs" class="mt-6 max-h-64 overflow-y-auto font-mono text-sm bg-gray-50 p-4 border rounded-lg whitespace-pre-wrap"></div>
+
+    <div id="pdf-container" class="mt-6 hidden">
+      <a id="pdf-link" href="{{ pdf_link }}" target="_blank" class="text-blue-600 underline">Open PDF</a>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+  
+    const generateBtn = document.getElementById('generate-btn');
+    const generateText = document.getElementById('generate-text');
+    const spinner = document.getElementById('spinner');
+    const logsDiv = document.getElementById('logs');
+    const pdfContainer = document.getElementById('pdf-container');
+    const pdfLink = document.getElementById('pdf-link');
+    const userEmailSpan = document.getElementById('user-email');
+  
+    let userEmail = "";
+  
+    // Get user email from backend
+    fetch('/me')
+      .then(res => res.json())
+      .then(data => {
+        userEmail = data.email;
+        userEmailSpan.textContent = userEmail;
+      });
+  
+    function setLoadingState(isLoading) {
+      generateBtn.disabled = isLoading;
+      spinner.classList.toggle('hidden', !isLoading);
+      generateText.textContent = isLoading ? "Generating..." : "Generate";
+    }
+  
+    socket.on('log', (data) => {
+      logsDiv.textContent += data.message + "\n";
+      logsDiv.scrollTop = logsDiv.scrollHeight;
+  
+      // Check if PDF generation is completed and update the link
+      if (data.message.includes("🎉 All done!")) {
+        handleFinish(data.message);
+      }
+    });
+  
+    function handleFinish(message) {
+      setLoadingState(false);
+  
+      // Display the PDF container and link
+      pdfContainer.classList.remove('hidden');
+  
+      // Assuming the message contains the PDF link
+      const pdfLinkMatch = message.match(/PDF Link: (.*)/);
+      if (pdfLinkMatch) {
+        pdfLink.href = pdfLinkMatch[1];  // Update the link to the generated PDF
+        pdfLink.textContent = "Open PDF"; // Update link text
+      }
+    }
+  
+    generateBtn.addEventListener('click', () => {
+  if (!userEmail) return;
+
+  logsDiv.textContent = "";  // Clear previous logs
+  pdfContainer.classList.add('hidden');  // Hide PDF link section initially
+  setLoadingState(true);  // Show loading spinner
+
+  fetch('/generate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ email: userEmail })
+  })
+    .then(res => {
+      if (!res.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return res.json();  // Parse the response as JSON
+    })
+    .then(data => {
+      if (data.result !== "Generation Complete") {
+        logsDiv.textContent += "❌ Error: " + (data.error || "Unknown error") + "\n";
+        setLoadingState(false);
+      } else {
+        // Handle PDF link and show "Re-run" button
+        if (data.pdf_link) {
+          pdfLink.href = data.pdf_link; // Update PDF link
+          pdfLink.textContent = "Open PDF"; // Update the link text
+          pdfContainer.classList.remove('hidden'); // Show PDF container
+        } else {
+          logsDiv.textContent += "❌ No PDF link found\n";
+        }
+        setLoadingState(false); // Hide the loading state
+      }
+    })
+    .catch(err => {
+      logsDiv.textContent += "❌ Request failed: " + err + "\n";
+      setLoadingState(false);
+    });
+});
+
+
+  </script>
+  
+</body>
+</html>
