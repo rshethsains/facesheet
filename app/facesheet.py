@@ -3,57 +3,20 @@ import sys
 import json
 
 from dotenv import load_dotenv
-from googleapiclient.http import MediaFileUpload
 from jinja2 import Environment, FileSystemLoader
 
 from pdf import convert_html_to_pdf
 from logger import log_message
-from config import IS_PRODUCTION, PARENT_FOLDER
-from google_auth_helper import get_drive_service, get_sheet
+from config import IS_PRODUCTION, PARENT_FOLDER, TEMPLATE_DIR
+from google_auth_helper import get_sheet
 from images_helper import initialize_image_index, check_image_exists
 from sheet import fetch_pdf_settings, generate_grouped_people
 from core import app
+from upload_delete import upload_or_replace_file
 
 # === Environment Setup ===
 if not IS_PRODUCTION:
     load_dotenv()
-
-# === Config ===
-TEMPLATE_DIR = "templates"
-
-drive_service = get_drive_service()
-
-# === Drive Upload ===
-def upload_or_replace_file(file_path, filename, parent_id, mime_type="application/pdf"):
-    """Uploads a file to Drive, replacing the old one if it exists."""
-    try:
-        existing = drive_service.files().list(
-            q=f"'{parent_id}' in parents and name='{filename}' and trashed=false",
-            fields="files(id)"
-        ).execute().get('files', [])
-
-        for f in existing:
-            try:
-                drive_service.files().delete(fileId=f['id']).execute()
-                log_message(f"🗑️ Deleted old {filename}")
-            except Exception as e:
-                log_message(f"⚠️ Failed to delete {filename}: {e}")
-
-        metadata = {
-            'name': filename,
-            'parents': [parent_id],
-            'mimeType': mime_type
-        }
-        media = MediaFileUpload(file_path, mimetype=mime_type, resumable=True, chunksize=5 * 1024 * 1024)
-        upload = drive_service.files().create(body=metadata, media_body=media, fields='id').execute()
-
-        file_link = f"https://drive.google.com/file/d/{upload['id']}/view"
-        log_message(f"✅ Uploaded file: {file_link}")
-        return upload['id'], file_link
-
-    except Exception as e:
-        log_message(f"❌ Upload error: {e}")
-        return None, None
 
 # === Helpers ===
 def return_response(payload):
