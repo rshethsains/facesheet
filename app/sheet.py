@@ -4,10 +4,19 @@ from images_helper import check_image_exists
 from logger import log_message
 from config import PARENT_FOLDER
 
-def fetch_pdf_settings(sheet):
+def fetch_pdf_config_settings(sheet):
     settings = sheet.worksheet("Settings").get_all_values()
     data = {row[0]: row[1] for row in settings[1:] if row[0]}
-    return data, data.get("PDFSize", "A4"), data.get("TopMargin", "0.5in"), data.get("BottomMargin", "0.5in")
+
+    pdf_size = data.get("PDFSize", "A4")
+    top_margin = data.get("TopMargin", "0.5in")
+    bottom_margin = data.get("BottomMargin", "0.5in")
+    title_font_size = data.get("TitleFontSize", "24pt")
+    logo_name = data.get("LogoName", "logo.png")
+    logo_width = data.get("LogoWidth", "150px")
+    logo_height = data.get("LogoHeight", "80px")
+
+    return data, pdf_size, top_margin, bottom_margin, logo_name
 
 def generate_grouped_people(sheet):
     """Reads people data from the 'People' sheet and groups them by category."""

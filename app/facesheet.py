@@ -7,10 +7,10 @@ from jinja2 import Environment, FileSystemLoader
 
 from pdf import convert_html_to_pdf
 from logger import log_message
-from config import IS_PRODUCTION, PARENT_FOLDER, TEMPLATE_DIR
+from config import IS_PRODUCTION, PARENT_FOLDER, TEMPLATE_DIR, IMAGE_DRIVE_FOLDER_ID
 from google_auth_helper import get_sheet
 from images_helper import initialize_image_index, check_image_exists
-from sheet import fetch_pdf_settings, generate_grouped_people
+from sheet import fetch_pdf_config_settings, generate_grouped_people
 from core import app
 from upload_delete import upload_or_replace_file
 
@@ -36,15 +36,15 @@ def generate(email, sheet_id):
         OUTPUT_HTML = f"{sheet.title}.html"
         OUTPUT_PDF = f"{sheet.title}.pdf"
 
-        settings_data, size, top, bottom = fetch_pdf_settings(sheet)
-        log_message("⚙️ PDF settings fetched.")
-
-        initialize_image_index()
+        settings_data, size, top, bottom, logo_name = fetch_pdf_config_settings(sheet)
+        log_message("⚙️ PDF Config settings fetched.")
+        
+        initialize_image_index(IMAGE_DRIVE_FOLDER_ID)
 
         grouped_people = generate_grouped_people(sheet)
         log_message(f"🧑‍🤝‍🧑 Grouped data for {len(grouped_people)} groups.")
 
-        logo_path = check_image_exists("logo")
+        logo_path = check_image_exists(logo_name)
         log_message(f"🖼️ Logo path: {logo_path}")
 
         env = Environment(loader=FileSystemLoader(TEMPLATE_DIR))

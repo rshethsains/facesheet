@@ -11,7 +11,7 @@
   }
 
   .title {
-      font-size: 18px;
+      font-size: {{settings_data.TitleFontSize}};
       font-weight: bold;
   }
 
@@ -108,12 +108,18 @@
   .page-break {
     page-break-after: always;
   }
+
+  .logo-image {
+    width: {{ settings_data.LogoWidth }};
+    height: {{ settings_data.LogoHeight }};
+  }
+  
 </style>
 </head>
 <body>
   <div class="title">{{ settings_data.Title }}</div>
   <div class="logo">
-    <img src="{{ logo_path }}" alt="Logo" style="width: 320px; height: 110px;">
+    <img src="{{ logo_path }}" alt="Logo" class="logo-image">
   </div>
   {% for category, people in grouped_people.items() %}
     <div class="category-group page-break">

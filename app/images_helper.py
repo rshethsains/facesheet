@@ -8,16 +8,13 @@ from google_auth_helper import get_drive_service
 # === Environment Setup ===
 load_dotenv()
 
-# === Config ===
-IMAGE_DRIVE_FOLDER_ID = os.getenv("IMAGE_DRIVE_FOLDER_ID")
-
 # Drive service
 drive_service = get_drive_service()
 
 # Global index
 _image_index = {}
 
-def initialize_image_index():
+def initialize_image_index(IMAGE_DRIVE_FOLDER_ID):
     """Fetch all image names from Google Drive and normalize to lowercase."""
     global _image_index
     _image_index = {}  # Reset index each run
@@ -52,17 +49,11 @@ def initialize_image_index():
 def check_image_exists(image_name):
     """Look up the image in the normalized index with common extensions."""
     norm_name = unicodedata.normalize('NFKD', image_name).lower()
-    log_message(f"🔍 Checking image index for: {norm_name}")
 
     for ext in ['.png', '.jpg', '.jpeg']:
         key = f"{norm_name}{ext}"
         if key in _image_index:
-            log_message(f"✅ Found '{key}' in Drive image index.")
             return _image_index[key]
 
     log_message(f"❌ '{norm_name}' not found in Drive image index.")
     return None
-
-def check_logo():
-    """Convenience method to check for the logo image."""
-    return check_image_exists("logo") or "image_not_found.png"
