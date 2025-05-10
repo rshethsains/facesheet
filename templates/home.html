@@ -37,17 +37,30 @@
   <!-- Main Content -->
   <main class="px-6 py-8 flex-1 w-full max-w-4xl mx-auto">
     <h2 class="text-center text-2xl font-semibold mb-6">Facesheet Generator</h2>
-    <div class="flex justify-center mb-4">
-      <a href='https://drive.google.com/drive/folders/{{parent}}' target="_blank" class="inline-flex items-center text-sm text-white">
-        <img src="https://kodular-community.s3.dualstack.eu-west-1.amazonaws.com/original/3X/3/b/3b1cb1d1842e4ecba35ba52e22c3b808d6bddde5.jpeg" alt="Google Drive Icon" class="w-5 h-5 mr-1" />
-        Facesheet Google Drive
-      </a>
+    <div class="container">
+      {% if sheets|length == 0 %}
+        <p class="text-sm mt-10 inline-flex items-center justify-center">
+          No Google Sheets found.
+          <a href='https://drive.google.com/drive/folders/{{parent}}' target="_blank" class="inline-flex items-center text-sm text-white">
+            <img src="https://kodular-community.s3.dualstack.eu-west-1.amazonaws.com/original/3X/3/b/3b1cb1d1842e4ecba35ba52e22c3b808d6bddde5.jpeg" alt="Google Drive Icon" class="w-5 h-5 ml-2">
+          </a>  
+        </p>
+      {% else %}
+        <p class="text-sm mt-10 inline-flex items-center justify-center">
+          Select a Google Shee below to convert to PDF
+          <a href='https://drive.google.com/drive/folders/{{parent}}' target="_blank" class="inline-flex items-center text-sm text-white">
+            <img src="https://kodular-community.s3.dualstack.eu-west-1.amazonaws.com/original/3X/3/b/3b1cb1d1842e4ecba35ba52e22c3b808d6bddde5.jpeg" alt="Google Drive Icon" class="w-5 h-5 ml-2">
+          </a>  
+          </p>
+      {% endif %}
     </div>
-    {% if sheets|length == 0 %}
-      <p class="text-center text-sm mt-10">No Google Sheets found.</p>
-    {% else %}
-      <p class="text-center text-sm mt-10">Generate a PDF from one of your Google Sheets:</p>
-    {% endif %}
+    
+    <style>
+      .container {
+        display: flex;
+        justify-content: center; /* Center horizontally */
+      }
+    </style>
 
     <!-- Sheet Cards -->
     <div id="sheet-container" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 place-items-center transition-all duration-300">
