@@ -31,12 +31,12 @@
     <div class="text-xs font-light mt-2">
       <span class="underline text-white">{{ email }}</span>
     </div>
-    <div class="w-24 border-b-2 border-white mt-4"></div>
+    <h2 class="text-center text-2xl font-semibold mt-6">Facesheet Generator</h2>
+    <div class="w-24 border-b-2 border-white mt-2"></div>
   </header>
 
   <!-- Main Content -->
   <main class="px-6 py-8 flex-1 w-full max-w-4xl mx-auto">
-    <h2 class="text-center text-2xl font-semibold mb-6">Facesheet Generator</h2>
     <div class="container">
       {% if sheets|length == 0 %}
         <p class="text-sm mt-10 inline-flex items-center justify-center">
@@ -47,7 +47,7 @@
         </p>
       {% else %}
         <p class="text-sm mt-10 inline-flex items-center justify-center">
-          Select a Google Shee below to convert to PDF
+          Select a Google Sheet below to convert to PDF
           <a href='https://drive.google.com/drive/folders/{{parent}}' target="_blank" class="inline-flex items-center text-sm text-white">
             <img src="https://kodular-community.s3.dualstack.eu-west-1.amazonaws.com/original/3X/3/b/3b1cb1d1842e4ecba35ba52e22c3b808d6bddde5.jpeg" alt="Google Drive Icon" class="w-5 h-5 ml-2">
           </a>  
