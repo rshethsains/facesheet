@@ -7,7 +7,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from pdf import convert_html_to_pdf
 from logger import log_message
-from config import IS_PRODUCTION, PARENT_FOLDER, TEMPLATE_DIR, IMAGE_DRIVE_FOLDER_ID
+from config import IS_PRODUCTION, PARENT_FOLDER, TEMPLATE_DIR
 from google_auth_helper import get_sheet
 from images_helper import initialize_image_index, check_image_exists
 from sheet import fetch_pdf_config_settings, generate_grouped_people
@@ -39,7 +39,7 @@ def generate(email, sheet_id):
         settings_data, size, top, bottom, logo_name = fetch_pdf_config_settings(sheet)
         log_message("⚙️ PDF Config settings fetched.")
         
-        initialize_image_index(IMAGE_DRIVE_FOLDER_ID)
+        initialize_image_index(PARENT_FOLDER)
 
         grouped_people = generate_grouped_people(sheet)
         log_message(f"🧑‍🤝‍🧑 Grouped data for {len(grouped_people)} groups.")
@@ -64,7 +64,6 @@ def generate(email, sheet_id):
         convert_html_to_pdf(OUTPUT_HTML, OUTPUT_PDF, size, top, bottom)
 
         file_id, file_link = upload_or_replace_file(OUTPUT_PDF, OUTPUT_PDF, PARENT_FOLDER)
-        log_message(f"📤 PDF uploaded to Drive. Link: {file_link}")
 
         payload = {"result": "Success", "pdf_link": file_link}
         if not IS_PRODUCTION:

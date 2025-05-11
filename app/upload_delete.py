@@ -28,7 +28,7 @@ def upload_or_replace_file(file_path, filename, parent_id, mime_type="applicatio
         upload = drive_service.files().create(body=metadata, media_body=media, fields='id').execute()
 
         file_link = f"https://drive.google.com/file/d/{upload['id']}/view"
-        log_message(f"✅ Uploaded file: {file_link}")
+        log_message(f"✅ Uploaded file")
         return upload['id'], file_link
 
     except Exception as e:

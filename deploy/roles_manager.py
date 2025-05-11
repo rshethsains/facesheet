@@ -3,6 +3,8 @@ import os
 import json
 from dotenv import load_dotenv
 
+DEPLOY_DIR = "deploy"
+
 def run_command(cmd, capture_output=False):
     print(f"➡️ Running: {cmd}")
     if capture_output:
@@ -17,7 +19,7 @@ def run_command(cmd, capture_output=False):
 
 def get_current_roles(project_id, service_account_email):
     output = run_command(
-        f"gcloud projects get-iam-policy {project_id} --format=json", 
+        f"gcloud projects get-iam-policy {project_id} --format=json",
         capture_output=True
     )
     policy = json.loads(output)
@@ -36,15 +38,16 @@ def ensure_correct_roles(dry_run=False):
     PROJECT_ID = os.getenv("PROJECT_ID")
     SERVICE_ACCOUNT_EMAIL = os.getenv("SERVICE_ACCOUNT_EMAIL")
     USER_EMAIL = os.getenv("USER_EMAIL")
+    IMAGE_NAME = os.getenv("IMAGE_NAME")
 
-    if not PROJECT_ID or not SERVICE_ACCOUNT_EMAIL or not USER_EMAIL:
-        raise ValueError("Missing PROJECT_ID, SERVICE_ACCOUNT_EMAIL, or USER_EMAIL in .env!")
+    if not PROJECT_ID or not SERVICE_ACCOUNT_EMAIL or not USER_EMAIL or not IMAGE_NAME:
+        raise ValueError("Missing PROJECT_ID, SERVICE_ACCOUNT_EMAIL, USER_EMAIL, or IMAGE_NAME in .env!") # Modified
 
     allowed_roles = [
-        "roles/run.admin",              
-        "roles/storage.admin",           
-        "roles/artifactregistry.writer",  
-        "roles/iam.serviceAccountUser",  
+        "roles/run.admin",
+        "roles/storage.admin",
+        "roles/artifactregistry.writer",
+        "roles/iam.serviceAccountUser",
         "roles/iam.serviceAccountTokenCreator"
     ]
 
@@ -56,11 +59,25 @@ def ensure_correct_roles(dry_run=False):
         f"--project={PROJECT_ID}"
     )
 
-    # Step 2: Check existing roles
+    # Step 2: Grant invoker permission to the service account on the Cloud Run service
+    print(f"➕ Ensuring service account '{SERVICE_ACCOUNT_EMAIL}' can invoke Cloud Run service '{IMAGE_NAME}'")
+    if not dry_run:
+        try:
+            run_command(
+                f"gcloud run services add-iam-policy-binding {IMAGE_NAME} "
+                f"--member='serviceAccount:{SERVICE_ACCOUNT_EMAIL}' "
+                f"--role='roles/run.invoker' "
+                f"--project={PROJECT_ID}"
+            )
+            print(f"✅ Service account '{SERVICE_ACCOUNT_EMAIL}' granted invoker permission on Cloud Run service '{IMAGE_NAME}'.")
+        except RuntimeError as e:
+            print(f"⚠️ Error granting invoker permission: {e}")
+
+    # Step 3: Check existing roles
     current_roles = get_current_roles(PROJECT_ID, SERVICE_ACCOUNT_EMAIL)
     print(f"🔎 Current roles: {current_roles}")
 
-    # Step 3: Remove any extra roles
+    # Step 4: Remove any extra roles
     for role in current_roles:
         if role not in allowed_roles:
             print(f"🗑️ Removing extra role: {role}")
@@ -71,7 +88,7 @@ def ensure_correct_roles(dry_run=False):
                     f"--role='{role}'"
                 )
 
-    # Step 4: Add any missing roles
+    # Step 5: Add any missing roles
     for role in allowed_roles:
         if role not in current_roles:
             print(f"➕ Adding missing role: {role}")

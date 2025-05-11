@@ -42,7 +42,10 @@ def convert_html_to_pdf(html_in, pdf_out, pdf_size, top_margin, bottom_margin):
             for attempt in range(max_retries + 1):
                 all_loaded = are_all_images_loaded(page)
                 if all_loaded:
-                    log_message(f"✅ All Google Drive images loaded after {attempt} attempts.")
+                    if attempt == 0:
+                        log_message(f"✅ All Google Drive images loaded")
+                    else:
+                        log_message(f"✅ All Google Drive images loaded after {attempt} attempts.")
                     break
                 elif attempt < max_retries:
                     log_message(f"⚠️ Not all Google Drive images loaded. Retrying in {retry_delay} seconds (Attempt {attempt + 1}/{max_retries + 1})...")
