@@ -48,7 +48,7 @@ def build_push_and_deploy(env_vars):
     project_id = env_vars["PROJECT_ID"]
     image_name = env_vars["IMAGE_NAME"]
     service_name = env_vars["IMAGE_NAME"]
-    region = env_vars.get("REGION", "europe-west2")
+    region = env_vars.get("REGION")
 
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     tag = f"{image_name}:{timestamp}"
@@ -76,12 +76,29 @@ def build_push_and_deploy(env_vars):
 
     print(f"✅ Deployment complete: {tag}")
 
+def setup_gcloud(project_id, region):
+
+    subprocess.run(["gcloud", "--version"], check=True, capture_output=True)  # capture_output added
+    print(f"Setting gcloud project to: {project_id}")
+    run_command(
+        f"gcloud config set project {project_id}"
+    )
+    print(f"Setting gcloud region to: {region}")
+    run_command(
+        f"gcloud config set compute/region {region}"
+    )
+
+    print("gcloud project and region have been successfully set")
+    return True
+
 def main():
     # Load environment variables
     env_vars = load_env_to_dict()
     if not env_vars:
         print("No environment variables found in .env. Exiting.")
         return
+
+    setup_gcloud(env_vars["PROJECT_ID"], env_vars["REGION"])
 
     # Assign and fix service account roles before deployment
     ensure_correct_roles(dry_run=False)

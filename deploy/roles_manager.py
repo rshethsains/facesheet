@@ -39,6 +39,7 @@ def ensure_correct_roles(dry_run=False):
     SERVICE_ACCOUNT_EMAIL = os.getenv("SERVICE_ACCOUNT_EMAIL")
     USER_EMAIL = os.getenv("USER_EMAIL")
     IMAGE_NAME = os.getenv("IMAGE_NAME")
+    REGION = os.getenv("REGION")
 
     if not PROJECT_ID or not SERVICE_ACCOUNT_EMAIL or not USER_EMAIL or not IMAGE_NAME:
         raise ValueError("Missing PROJECT_ID, SERVICE_ACCOUNT_EMAIL, USER_EMAIL, or IMAGE_NAME in .env!") # Modified
@@ -67,7 +68,9 @@ def ensure_correct_roles(dry_run=False):
                 f"gcloud run services add-iam-policy-binding {IMAGE_NAME} "
                 f"--member='serviceAccount:{SERVICE_ACCOUNT_EMAIL}' "
                 f"--role='roles/run.invoker' "
-                f"--project={PROJECT_ID}"
+                f"--project={PROJECT_ID} "
+                f"--region={REGION}"
+
             )
             print(f"✅ Service account '{SERVICE_ACCOUNT_EMAIL}' granted invoker permission on Cloud Run service '{IMAGE_NAME}'.")
         except RuntimeError as e:
@@ -85,7 +88,8 @@ def ensure_correct_roles(dry_run=False):
                 run_command(
                     f"gcloud projects remove-iam-policy-binding {PROJECT_ID} "
                     f"--member='serviceAccount:{SERVICE_ACCOUNT_EMAIL}' "
-                    f"--role='{role}'"
+                    f"--role='{role}' "
+                    f"--region={REGION}"
                 )
 
     # Step 5: Add any missing roles
@@ -96,7 +100,8 @@ def ensure_correct_roles(dry_run=False):
                 run_command(
                     f"gcloud projects add-iam-policy-binding {PROJECT_ID} "
                     f"--member='serviceAccount:{SERVICE_ACCOUNT_EMAIL}' "
-                    f"--role='{role}'"
+                    f"--role='{role}' "
+                    f"--region={REGION}"
                 )
 
     print("✅ Service account roles are now correct!")
