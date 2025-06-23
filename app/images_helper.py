@@ -49,7 +49,7 @@ def initialize_image_index(PARENT_FOLDER_ID):
                 name = item['name']
                 file_id = item['id']
                 norm_key = unicodedata.normalize('NFKD', name).lower()
-                _image_index[norm_key] = f"https://lh3.googleusercontent.com/d/{file_id}=s220?authuser=0"
+                _image_index[norm_key] = f"https://lh3.googleusercontent.com/d/{file_id}=s750?authuser=0"
 
             page_token = response.get('nextPageToken')
             if not page_token:
