@@ -68,11 +68,11 @@
     <!-- Sheet Cards -->
     <div id="sheet-container" class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 place-items-center transition-all duration-300">
       {% for sheet in sheets %}
-      <div class="sheet-card bg-white text-black rounded-xl p-4 shadow transition-all duration-200 cursor-pointer w-full max-w-xs hover:bg-white"
+      <div class="sheet-card bg-white text-black rounded-xl p-4 shadow transition-all duration-200 cursor-pointer w-full max-w-xs hover:bg-white" style="align-content: center;"
             data-sheet-id="{{ sheet.id }}"
             data-sheet-name="{{ sheet.name }}">
         <div class="flex items-center gap-3">
-          <img src="https://www.svgrepo.com/show/504430/google-sheets.svg" class="w-8 h-8" alt="Sheet Icon" />
+          <img src="https://www.svgrepo.com/show/504430/google-sheets.svg" class="w-12 h-12" alt="Sheet Icon" />
           <div class="min-w-0">
             <div class="font-semibold text-sm break-words">{{ sheet.name }}</div>
             <div class="text-xs text-black/50">{{ sheet.modifiedTime }}</div>
