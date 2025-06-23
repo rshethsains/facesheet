@@ -11,6 +11,9 @@
     body {
       font-family: 'Poppins', sans-serif;
     }
+    .sheet-card {
+      min-height: 88px;
+    }
     .sheet-card:hover {
       background-color: #1f1f1f;
     }
@@ -36,7 +39,7 @@
   </header>
 
   <!-- Main Content -->
-  <main class="px-6 py-8 flex-1 w-full max-w-4xl mx-auto">
+  <main class="flex-1 w-full max-w-4xl mx-auto">
     <div class="container">
       {% if sheets|length == 0 %}
         <p class="text-sm mt-10 inline-flex items-center justify-center">
